@@ -38,13 +38,9 @@ export default function MediaResults() {
   const [selectedVisualElement, setSelectedVisualElement] = useState('');
   const [selectedColorTone, setSelectedColorTone] = useState('');
   const [selectedGazeFlow, setSelectedGazeFlow] = useState('');
-  const [selectedAdvertiser, setSelectedAdvertiser] = useState('A광고주');
   const [selectedLargeCategory, setSelectedLargeCategory] = useState('');
   const [selectedSmallCategory, setSelectedSmallCategory] = useState('');
   const [brandName, setBrandName] = useState('');
-
-  // 광고주 목록
-  const advertisers = ['A광고주', 'B광고주', 'C광고주'];
 
   // 카테고리 데이터
   const categoryData = {

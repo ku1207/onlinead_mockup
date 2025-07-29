@@ -385,7 +385,7 @@ CTA 하단 Bar 버튼 / "카카오 1초 회원가입"으로 전환 연결
             {/* 초기 상태 (버튼 클릭 전) */}
             {!isLoading && !showSuggestions && (
               <div className="text-center py-12 text-gray-500">
-                위의 'AI 카피 제안 생성' 버튼을 클릭하여 AI 카피 제안을 받아보세요.
+                위의 &apos;AI 카피 제안 생성&apos; 버튼을 클릭하여 AI 카피 제안을 받아보세요.
               </div>
             )}
 
@@ -433,7 +433,7 @@ CTA 하단 Bar 버튼 / "카카오 1초 회원가입"으로 전환 연결
                         <div className="text-xs text-gray-600" style={{fontSize: '10px'}}>CTR, 전환율, ROAS</div>
                       </td>
                       <td className="border border-gray-300 p-2 text-center">
-                        <div className="text-xs text-gray-600" style={{fontSize: '10px'}}>A : "한정! 오늘만"<br/>B : "단 하루! 역대급 혜택"</div>
+                        <div className="text-xs text-gray-600" style={{fontSize: '10px'}}>A : &quot;한정! 오늘만&quot;<br/>B : &quot;단 하루! 역대급 혜택&quot;</div>
                       </td>
                       <td className="border border-gray-300 p-2 text-center">
                         <div className="text-xs text-gray-600" style={{fontSize: '10px'}}>베네톤 레드<br/>다이아 핑크</div>
