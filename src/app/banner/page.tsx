@@ -9,8 +9,25 @@ export default function BannerAds() {
   const [isColumnPopupOpen, setIsColumnPopupOpen] = useState(false);
   
   // 세부 검색 상태들
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const getDefaultStartDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}-01`;
+  };
+
+  const getDefaultEndDate = () => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const year = yesterday.getFullYear();
+    const month = String(yesterday.getMonth() + 1).padStart(2, '0');
+    const day = String(yesterday.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const [startDate, setStartDate] = useState(getDefaultStartDate());
+  const [endDate, setEndDate] = useState(getDefaultEndDate());
   const [selectedPlatform, setSelectedPlatform] = useState('');
   const [selectedGenders, setSelectedGenders] = useState(['남성', '여성']);
   const [selectedAges, setSelectedAges] = useState(['10대', '20대', '30대', '40대', '50대', '60대', '70대', '80대', '90대']);
@@ -33,6 +50,14 @@ export default function BannerAds() {
     '소재', '메인카피', '메인카피 유형', '메인카피 비중(%)', '서브카피 비중(%)',
     'CTA위치', 'CTA비중(%)', '모델비중(%)', '제품비중(%)', '비주얼요소', '소재칼라톤', '시선흐름', '디자인분석'
   ];
+
+  // 컬럼 그룹 정의
+  const columnGroups = {
+    광고정보: ['캠페인명', '캠페인 기간', '광고플랫폼', '광고타겟', '타겟연령', '소재ID', '소재명'],
+    집행정보: ['노출수', '클릭수', 'CTR(%)', '전환수', 'CVR(%)', '광고비', '매출액', 'ROAS(%)'],
+    분석정보: ['소재', '메인카피', '메인카피 유형', '메인카피 비중(%)', '서브카피 비중(%)', 'CTA위치', 'CTA비중(%)', '모델비중(%)', '제품비중(%)', '비주얼요소', '소재칼라톤', '시선흐름', '디자인분석']
+  };
+
   const [visibleColumns, setVisibleColumns] = useState(allColumns);
 
   // 지표별 단위 매핑
@@ -116,6 +141,10 @@ export default function BannerAds() {
   ];
 
   const [filteredData, setFilteredData] = useState(sampleData);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(30);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const currentData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // 기본 검색 함수
   const handleBasicSearch = () => {
@@ -218,6 +247,22 @@ export default function BannerAds() {
     );
   };
 
+  // 그룹별 전체 선택/해제 핸들러
+  const handleGroupToggle = (groupName: string, isChecked: boolean) => {
+    const groupColumns = columnGroups[groupName as keyof typeof columnGroups];
+    if (isChecked) {
+      setVisibleColumns(prev => [...prev, ...groupColumns.filter(col => !prev.includes(col))]);
+    } else {
+      setVisibleColumns(prev => prev.filter(col => !groupColumns.includes(col)));
+    }
+  };
+
+  // 그룹별 선택 상태 확인
+  const isGroupSelected = (groupName: string) => {
+    const groupColumns = columnGroups[groupName as keyof typeof columnGroups];
+    return groupColumns.every(col => visibleColumns.includes(col));
+  };
+
   return (
     <div className="h-screen flex flex-col">
       <Navigation />
@@ -229,10 +274,7 @@ export default function BannerAds() {
               <select
                 value={selectedAdvertiser}
                 onChange={(e) => setSelectedAdvertiser(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                style={{
-                  borderRadius: '6px',
-                }}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
               >
                 {advertisers.map((advertiser) => (
                   <option key={advertiser} value={advertiser}>
@@ -280,11 +322,11 @@ export default function BannerAds() {
             </div>
 
             {/* 세부 검색 영역 (슬라이딩) */}
-            <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-              isDetailSearchOpen ? 'max-h-[400px] opacity-100 mt-6' : 'max-h-0 opacity-0'
+            <div className={`transition-all duration-300 ease-in-out ${
+              isDetailSearchOpen ? 'max-h-[600px] opacity-100 mt-6 overflow-y-auto' : 'max-h-0 opacity-0 overflow-hidden'
             }`}>
               <div className="border-t border-gray-200 pt-6 px-4">
-                <div className="space-y-4">
+                <div className="space-y-6">
 
                   {/* 기간 그룹 */}
                   <div>
@@ -296,7 +338,7 @@ export default function BannerAds() {
                           type="date"
                           value={startDate}
                           onChange={(e) => setStartDate(e.target.value)}
-                          className="w-40 px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-32 px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                       <div>
@@ -305,7 +347,7 @@ export default function BannerAds() {
                           type="date"
                           value={endDate}
                           onChange={(e) => setEndDate(e.target.value)}
-                          className="w-40 px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-32 px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                     </div>
@@ -314,16 +356,13 @@ export default function BannerAds() {
                   {/* 플랫폼 및 창작 요소 그룹 */}
                   <div>
                     <h3 className="text-sm font-semibold text-gray-800 mb-3">플랫폼 및 창작 요소</h3>
-                    <div className="grid grid-cols-4 gap-3">
+                    <div className="grid grid-cols-4 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">광고플랫폼</label>
                         <select
                           value={selectedPlatform}
                           onChange={(e) => setSelectedPlatform(e.target.value)}
-                          className="w-full px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          style={{
-                            borderRadius: '6px',
-                          }}
+                          className="w-full px-2 py-2 h-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="">전체</option>
                           <option value="카카오">카카오</option>
@@ -337,10 +376,7 @@ export default function BannerAds() {
                         <select
                           value={selectedVisualElement}
                           onChange={(e) => setSelectedVisualElement(e.target.value)}
-                          className="w-full px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          style={{
-                            borderRadius: '6px',
-                          }}
+                          className="w-full px-2 py-2 h-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="">전체</option>
                           <option value="실사">실사</option>
@@ -353,10 +389,7 @@ export default function BannerAds() {
                         <select
                           value={selectedColorTone}
                           onChange={(e) => setSelectedColorTone(e.target.value)}
-                          className="w-full px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          style={{
-                            borderRadius: '6px',
-                          }}
+                          className="w-full px-2 py-2 h-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="">전체</option>
                           <option value="딥톤">딥톤</option>
@@ -374,10 +407,7 @@ export default function BannerAds() {
                         <select
                           value={selectedGazeFlow}
                           onChange={(e) => setSelectedGazeFlow(e.target.value)}
-                          className="w-full px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          style={{
-                            borderRadius: '6px',
-                          }}
+                          className="w-full px-2 py-2 h-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="">전체</option>
                           <option value="Z">Z</option>
@@ -388,7 +418,7 @@ export default function BannerAds() {
                     </div>
                   </div>
 
-                  {/* 타겟 그룹 */}
+                  {/* 타겟 그룹 - 한 줄로 정렬 */}
                   <div>
                     <h3 className="text-sm font-semibold text-gray-800 mb-3">타겟</h3>
                     <div className="flex items-center gap-8">
@@ -408,9 +438,9 @@ export default function BannerAds() {
                           ))}
                         </div>
                       </div>
-                      <div className="flex-1">
+                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">타겟연령</label>
-                        <div className="flex flex-wrap gap-4">
+                        <div className="flex gap-4">
                           {['10대', '20대', '30대', '40대', '50대', '60대', '70대', '80대', '90대'].map(age => (
                             <label key={age} className="flex items-center">
                               <input
@@ -427,17 +457,14 @@ export default function BannerAds() {
                     </div>
                   </div>
 
-                  {/* 지표 그룹 */}
+                  {/* 지표 그룹 - 한 줄로 정렬 */}
                   <div>
                     <h3 className="text-sm font-semibold text-gray-800 mb-3">지표</h3>
                     <div className="flex gap-2 items-center">
                       <select
                         value={selectedMetric}
                         onChange={(e) => setSelectedMetric(e.target.value)}
-                        className="px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[100px]"
-                        style={{
-                          borderRadius: '6px',
-                        }}
+                        className="px-2 py-2 h-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[100px]"
                       >
                         <option value="">선택</option>
                         <option value="노출수">노출수</option>
@@ -459,7 +486,7 @@ export default function BannerAds() {
                           value={metricValue}
                           onChange={(e) => setMetricValue(e.target.value)}
                           placeholder="값"
-                          className="px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-20 pr-8"
+                          className="px-2 py-2 h-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-20 pr-8"
                         />
                         {selectedMetric && metricUnits[selectedMetric] && (
                           <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs">
@@ -470,10 +497,7 @@ export default function BannerAds() {
                       <select
                         value={metricCondition}
                         onChange={(e) => setMetricCondition(e.target.value)}
-                        className="px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        style={{
-                          borderRadius: '6px',
-                        }}
+                        className="px-2 py-2 h-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="이상">이상</option>
                         <option value="이하">이하</option>
@@ -481,20 +505,12 @@ export default function BannerAds() {
                       <select
                         value={metricOperator}
                         onChange={(e) => setMetricOperator(e.target.value)}
-                        className="px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        style={{
-                          borderRadius: '6px',
-                        }}
+                        className="px-2 py-2 h-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="그리고">그리고</option>
                         <option value="또는">또는</option>
                       </select>
-                      <select
-                        className="px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[100px]"
-                        style={{
-                          borderRadius: '6px',
-                        }}
-                      >
+                      <select className="px-2 py-2 h-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[100px]">
                         <option value="">선택</option>
                         <option value="노출수">노출수</option>
                         <option value="클릭수">클릭수</option>
@@ -513,15 +529,10 @@ export default function BannerAds() {
                         <input
                           type="number"
                           placeholder="값"
-                          className="px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-20 pr-8"
+                          className="px-2 py-2 h-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-20 pr-8"
                         />
                       </div>
-                      <select
-                        className="px-2 py-2 h-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        style={{
-                          borderRadius: '6px',
-                        }}
-                      >
+                      <select className="px-2 py-2 h-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="이상">이상</option>
                         <option value="이하">이하</option>
                       </select>
@@ -558,34 +569,34 @@ export default function BannerAds() {
                       <td className="border border-gray-300 p-3 text-center bg-blue-50">
                         <div className="text-sm font-medium text-gray-700">CTR(상위 20% 평균)</div>
                       </td>
-                      <td className="border border-gray-300 p-3 text-center bg-green-50">
+                      <td className="border border-gray-300 p-3 text-center bg-blue-50">
                         <div className="text-sm font-medium text-gray-700">CVR(상위 20% 평균)</div>
                       </td>
-                      <td className="border border-gray-300 p-3 text-center bg-purple-50">
+                      <td className="border border-gray-300 p-3 text-center bg-blue-50">
                         <div className="text-sm font-medium text-gray-700">ROAS(상위 20% 평균)</div>
                       </td>
                     </tr>
                     {/* 2행 - 값 표시 */}
                     <tr>
                       <td className="border border-gray-300 p-3 text-center">
-                        <div className="text-lg font-bold text-blue-600">2.3%</div>
+                        <div className="text-lg font-bold text-blue-600">-</div>
                       </td>
                       <td className="border border-gray-300 p-3 text-center">
-                        <div className="text-lg font-bold text-green-600">12.5%</div>
+                        <div className="text-lg font-bold text-blue-600">-</div>
                       </td>
                       <td className="border border-gray-300 p-3 text-center">
-                        <div className="text-lg font-bold text-purple-600">450%</div>
+                        <div className="text-lg font-bold text-blue-600">450%</div>
                       </td>
                     </tr>
                     {/* 3행 */}
                     <tr>
-                      <td className="border border-gray-300 p-3 text-center bg-yellow-50">
+                      <td className="border border-gray-300 p-3 text-center bg-blue-50">
                         <div className="text-sm font-medium text-gray-700">메시지 유형분석</div>
                       </td>
-                      <td className="border border-gray-300 p-3 text-center bg-orange-50">
+                      <td className="border border-gray-300 p-3 text-center bg-blue-50">
                         <div className="text-sm font-medium text-gray-700">CTA 분석</div>
                       </td>
-                      <td className="border border-gray-300 p-3 text-center bg-pink-50">
+                      <td className="border border-gray-300 p-3 text-center bg-blue-50">
                         <div className="text-sm font-medium text-gray-700">디자인 분석</div>
                       </td>
                     </tr>
@@ -601,13 +612,29 @@ export default function BannerAds() {
                         <div className="text-sm text-gray-600">실사형 80%</div>
                       </td>
                     </tr>
-                    {/* 5-6행 병합 */}
+                    {/* 5행 - AI 종합 분석 */}
                     <tr>
-                      <td colSpan={3} className="border border-gray-300 p-4 text-center bg-gray-50">
-                        <div className="text-sm font-medium text-gray-700 mb-2">AI 종합 분석</div>
+                      <td colSpan={3} className="border border-gray-300 p-3 text-center bg-blue-50">
+                        <div className="text-sm font-medium text-gray-700">AI 종합 분석</div>
+                      </td>
+                    </tr>
+                    {/* 6행 - AI 종합 분석 값 */}
+                    <tr>
+                      <td colSpan={3} className="border border-gray-300 p-3 text-center">
+                        <div className="text-sm text-gray-600">성과 지표 우수</div>
+                      </td>
+                    </tr>
+                    {/* 7행 - 현재 캠페인 분석 결과 */}
+                    <tr>
+                      <td colSpan={3} className="border border-gray-300 p-3 text-center bg-blue-50">
+                        <div className="text-sm font-medium text-gray-700">현재 캠페인 분석 결과</div>
+                      </td>
+                    </tr>
+                    {/* 8행 - 현재 캠페인 분석 값 */}
+                    <tr>
+                      <td colSpan={3} className="border border-gray-300 p-3 text-center">
                         <div className="text-sm text-gray-600 leading-relaxed">
-                          현재 캠페인의 주요 성과 지표는 업계 평균을 상회하고 있습니다. 
-                          특히 할인·혜택형 메시지와 실사형 디자인의 조합이 높은 전환율을 보이고 있으며, 
+                          할인·혜택형 메시지와 실사형 디자인의 조합이 높은 전환율을 보이고 있으며, 
                           하단 우측 CTA 배치가 효과적인 것으로 분석됩니다.
                         </div>
                       </td>
@@ -640,7 +667,7 @@ export default function BannerAds() {
               </button>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="w-11/12 mx-auto divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     {allColumns.map(column => 
@@ -653,7 +680,7 @@ export default function BannerAds() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredData.map((item, index) => (
+                  {currentData.map((item, index) => (
                     <tr key={index} className="hover:bg-gray-50">
                       {visibleColumns.includes('캠페인명') && (
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 text-center">{item.캠페인명}</td>
@@ -753,6 +780,50 @@ export default function BannerAds() {
               </table>
             </div>
             
+            {/* 페이지네이션 및 행 개수 선택 영역 */}
+            {filteredData.length > 0 && (
+              <div className="flex justify-between items-center px-6 py-4 border-t border-gray-200">
+                {/* 왼쪽: 행 개수 선택 드롭다운 */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-700">표시 개수:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={30}>30</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+                
+                {/* 오른쪽: 페이지네이션 */}
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    &lt;
+                  </button>
+                  <span className="text-sm text-gray-700">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    &gt;
+                  </button>
+                </div>
+              </div>
+            )}
+            
             {filteredData.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-500">검색 조건에 맞는 데이터가 없습니다.</p>
@@ -764,33 +835,25 @@ export default function BannerAds() {
 
       {/* 컬럼 표시 설정 팝업 */}
       {isColumnPopupOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96 max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">표시할 컬럼 선택</h3>
-              <button
-                onClick={() => setIsColumnPopupOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg w-[1000px] max-h-[80vh] overflow-y-auto mx-4">
+            {/* 제목 영역 */}
+            <div className="p-6 border-b border-gray-300">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">표시 데이터 선택</h3>
+                <button
+                  onClick={() => setIsColumnPopupOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
-            <div className="space-y-2">
-              {allColumns.map(column => (
-                <label key={column} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={visibleColumns.includes(column)}
-                    onChange={() => handleColumnToggle(column)}
-                    className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <span className="text-sm text-gray-700">{column}</span>
-                </label>
-              ))}
-            </div>
-            <div className="flex justify-end gap-2 mt-6">
+
+            {/* 버튼 영역 - 상단으로 이동 */}
+            <div className="flex justify-end gap-2 p-6 border-b border-gray-200">
               <button
                 onClick={() => setVisibleColumns(allColumns)}
                 className="px-4 py-2 bg-transparent border border-gray-300 text-gray-600 rounded-md hover:bg-gray-600 hover:text-white transition duration-200"
@@ -809,6 +872,44 @@ export default function BannerAds() {
               >
                 적용
               </button>
+            </div>
+
+            {/* 컨텐츠 영역 - 가로 배치로 변경 */}
+            <div className="p-6">
+              <div className="grid grid-cols-3 gap-4">
+                {Object.entries(columnGroups).map(([groupName, columns]) => (
+                  <div key={groupName} className="border border-gray-200 rounded-lg p-4">
+                    {/* 그룹 제목과 전체 선택 */}
+                    <div className="flex flex-col items-center mb-4">
+                      <h4 className="text-md font-semibold text-gray-800 mb-2">{groupName}</h4>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={isGroupSelected(groupName)}
+                          onChange={(e) => handleGroupToggle(groupName, e.target.checked)}
+                          className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <span className="text-sm text-gray-600">전체 선택</span>
+                      </label>
+                    </div>
+                    
+                    {/* 컬럼 목록 */}
+                    <div className="space-y-2">
+                      {columns.map(column => (
+                        <label key={column} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={visibleColumns.includes(column)}
+                            onChange={() => handleColumnToggle(column)}
+                            className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <span className="text-sm text-gray-700">{column}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

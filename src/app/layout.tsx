@@ -9,8 +9,8 @@ const notoSansKR = Noto_Sans_KR({
 });
 
 export const metadata: Metadata = {
-  title: "온라인 광고 실적 확인 시스템",
-  description: "온라인 배너 광고 성과 분석 시스템",
+  title: "AI 배너광고 시스템",
+  description: "AI 배너광고 시스템",
 };
 
 export default function RootLayout({
